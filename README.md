@@ -34,17 +34,24 @@ python scripts/generate_dataset.py --urdf robots/ur10.urdf --output data/panda -
 - `train_triplets.pt`: 训练三元组数据
 - `metadata.json`: 数据集元信息
 
-### 3. 训练模型
+### 在后台运行训练
 
-使用生成的数据训练 GeNIK 模型：
+可以通过 nohup、tmux 或 screen 在后台运行训练并将日志重定向到文件，方便长期训练和断点恢复。
 
+示例（使用 nohup）：
 ```bash
-# 训练 Panda 模型
-python scripts/train_genik.py --urdf robots/panda_arm.urdf --data data/panda/train_triplets.pt --output outputs/panda --epochs 100
-
-# 训练 UR10 模型
-python scripts/train_genik.py --urdf robots/ur10.urdf --data data/ur10/train_triplets.pt --output outputs/ur10 --epochs 100
+nohup python scripts/train_genik.py --urdf robots/panda_arm.urdf --data data/panda/train_triplets.pt --batch-size 1024 --output outputs/panda --epochs 100 > outputs/panda/train.log 2>&1 &
 ```
+
+使用 UR10 的示例命令同理，只需替换 URDF、数据和输出路径：
+```bash
+nohup python -u scripts/train_genik.py --urdf robots/ur10.urdf --data data/ur10/train_triplets.pt --output outputs/ur10 --epochs 100 > outputs/ur10/train.log 2>&1 &
+```
+
+查看日志和管理进程：
+- 实时查看日志：tail -f outputs/panda/train.log
+- 查找进程并结束：ps aux | grep train_genik.py && kill <PID>
+- 若使用 --resume，请确保指向正确的 checkpoint 文件以恢复训练。
 
 **主要参数说明：**
 - `--urdf`: URDF 机器人模型文件路径
@@ -63,6 +70,10 @@ python scripts/train_genik.py --urdf robots/ur10.urdf --data data/ur10/train_tri
 **查看训练日志：**
 ```bash
 tensorboard --logdir outputs/panda
+```
+
+```
+nohup tensorboard --logdir outputs/panda --port 6007 &
 ```
 
 ### 4. 评估模型
